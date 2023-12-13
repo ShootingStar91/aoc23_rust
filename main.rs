@@ -38,27 +38,74 @@ fn parse(data: &str) -> Vec<(Vec<i32>, Vec<i32>)> {
 }
 
 fn get_points(card: (Vec<i32>, Vec<i32>)) -> i32 {
-  let mut points = 0;
-  let (winning, attempts) = card;
-  for attempt in attempts {
-    if winning.contains(&attempt) {
-      if points == 0 {
-        points = 1;
-      } else {
-        points *= 2;
-      }
+    let mut points = 0;
+    let (winning, attempts) = card;
+    for attempt in attempts {
+        if winning.contains(&attempt) {
+            if points == 0 {
+                points = 1;
+            } else {
+                points *= 2;
+            }
+        }
     }
-  }
-  points
+    points
 }
 
 fn compute_part_1(data: &str) {
     let cards = parse(data);
     let mut sum = 0;
     for card in cards {
-      sum += get_points(card);
+        sum += get_points(card);
     }
-    println!("{}", sum);
+    println!("Part 1: {}", sum);
+}
+
+fn get_matching_amount(card: &Card) -> i32 {
+    let mut amount = 0;
+    for attempt in &card.attempts {
+        if card.winning.contains(&attempt) {
+            amount += 1;
+        }
+    }
+    amount
+}
+
+fn count_cards(cards: Vec<Card>) -> i32 {
+    let mut amount: i32 = 0;
+    for card in cards {
+        amount += card.copies;
+    }
+    amount
+}
+
+#[derive(Clone)]
+struct Card {
+  winning: Vec<i32>,
+  attempts: Vec<i32>,
+  copies: i32,
+}
+
+fn compute_part_2(data: &str) {
+    let mut initial_cards = parse(data);
+    let mut cards: Vec<Card> = Vec::new();
+    for initial_card in initial_cards {
+        let card: Card = Card { winning: initial_card.0, attempts: initial_card.1, copies: 1 };
+        cards.push(card);
+    }
+    let mut amount = 0;
+    let mut i = 0;
+    for i in 0..cards.len() {
+      let card = cards.get(i).unwrap();
+      let multiplicator = card.copies;
+      let matches = get_matching_amount(&card);
+      for m in 1..matches+1 {
+        let card_to_copy = cards.get_mut(i + m as usize).unwrap();
+        card_to_copy.copies += 1 * multiplicator;
+      }
+    }
+    let amount = count_cards(cards);
+    println!("Part 2: {}", amount);
 }
 
 fn main() {
@@ -68,7 +115,9 @@ fn main() {
         println!("Reading from file '{}' ...", file_path);
         let data = fs::read_to_string(file_path).expect("Could not read file!\n");
         compute_part_1(&data);
+        compute_part_2(&data);
     } else {
-        compute_part_1(example_data)
+        compute_part_1(example_data);
+        compute_part_2(example_data);
     }
 }
